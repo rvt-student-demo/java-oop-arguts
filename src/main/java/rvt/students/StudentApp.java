@@ -1,15 +1,33 @@
 package rvt.students;
 
+import rvt.utils.ConsoleColors;
+
+import java.io.File;
 import java.util.Scanner;
 
 public class StudentApp {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        StudentService service = new StudentService(new CsvStorage("data/students.csv"));
+        
+        String workDir = System.getProperty("user.dir");
+
+        
+        String csvPath = workDir + File.separator + "java-oop-arguts"
+                + File.separator + "data"
+                + File.separator + "students.csv";
+
+        System.out.println(ConsoleColors.YELLOW.getCode() + "WORKDIR: " + workDir + ConsoleColors.RESET.getCode());
+        System.out.println(ConsoleColors.YELLOW.getCode() + "CSV PATH: " + csvPath + ConsoleColors.RESET.getCode());
+
+        StudentService service = new StudentService(new CsvStorage(csvPath));
 
         while (true) {
-            System.out.println("\nCommands: register | show | remove | edit | exit");
+            System.out.println(
+                    ConsoleColors.BLUE.getCode() +
+                            "\nCommands: register | show | remove | edit | exit" +
+                            ConsoleColors.RESET.getCode()
+            );
             System.out.print("> ");
             String cmd = sc.nextLine().trim().toLowerCase();
 
@@ -27,7 +45,20 @@ public class StudentApp {
                 String code = sc.nextLine().trim();
 
                 String err = service.register(first, last, email, code);
-                System.out.println(err == null ? "Registered!" : "Error: " + err);
+
+                if (err == null) {
+                    System.out.println(
+                            ConsoleColors.GREEN.getCode() +
+                                    "Student registered successfully!" +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                } else {
+                    System.out.println(
+                            ConsoleColors.RED.getCode() +
+                                    "Error: " + err +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                }
 
             } else if (cmd.equals("show")) {
                 TablePrinter.print(service.all());
@@ -35,7 +66,20 @@ public class StudentApp {
             } else if (cmd.equals("remove")) {
                 System.out.print("Personal code to remove: ");
                 String code = sc.nextLine().trim();
-                System.out.println(service.remove(code) ? "Removed!" : "Student not found.");
+
+                if (service.remove(code)) {
+                    System.out.println(
+                            ConsoleColors.GREEN.getCode() +
+                                    "Student removed!" +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                } else {
+                    System.out.println(
+                            ConsoleColors.RED.getCode() +
+                                    "Student not found." +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                }
 
             } else if (cmd.equals("edit")) {
                 System.out.print("Personal code to edit: ");
@@ -51,14 +95,35 @@ public class StudentApp {
                 String email = sc.nextLine().trim();
 
                 String err = service.edit(code, first, last, email);
-                System.out.println(err == null ? "Edited!" : "Error: " + err);
+
+                if (err == null) {
+                    System.out.println(
+                            ConsoleColors.GREEN.getCode() +
+                                    "Edited!" +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                } else {
+                    System.out.println(
+                            ConsoleColors.RED.getCode() +
+                                    "Error: " + err +
+                                    ConsoleColors.RESET.getCode()
+                    );
+                }
 
             } else if (cmd.equals("exit")) {
-                System.out.println("Bye!");
+                System.out.println(
+                        ConsoleColors.YELLOW.getCode() +
+                                "Bye!" +
+                                ConsoleColors.RESET.getCode()
+                );
                 break;
 
             } else {
-                System.out.println("Unknown command.");
+                System.out.println(
+                        ConsoleColors.RED.getCode() +
+                                "Unknown command." +
+                                ConsoleColors.RESET.getCode()
+                );
             }
         }
 

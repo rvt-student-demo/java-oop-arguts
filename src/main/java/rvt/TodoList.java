@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TodoList {
-    private final ArrayList<String> tasks;S
+    private final ArrayList<String> tasks;
     private final String filePath;
 
     public TodoList() {
