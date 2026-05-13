@@ -73,4 +73,7 @@ public class TodoList {
             System.out.println((i + 1) + ": " + tasks.get(i));
         }
     }
+    public ArrayList<String> getTasks() {
+        return tasks;
+    }
 }
