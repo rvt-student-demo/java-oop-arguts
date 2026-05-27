@@ -1,79 +1,108 @@
 package rvt;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.List;
 
 public class TodoList {
-    private final ArrayList<String> tasks;
-    private final String filePath;
+    private static final String DB_URL = "jdbc:sqlite:todo.db";
 
     public TodoList() {
-        this.filePath = "data/todo.csv";
-        this.tasks = new ArrayList<>();
-        loadFromFile();
+        initSchema();
     }
 
-    private void loadFromFile() {
-        Path path = Paths.get(filePath);
-        if (!Files.exists(path)) {
-            return;
-        }
-
-        try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i).trim();
-                if (line.isEmpty()) {
-                    continue;
-                }
-                if (i == 0 && line.toLowerCase().startsWith("id,task")) {
-                    continue;
-                }
-                String[] parts = line.split(",", 2);
-                if (parts.length == 2) {
-                    tasks.add(parts[1]);
-                }
-            }
-        } catch (IOException e) {
-            // Ignore load errors for now.
-        }
+    private Connection connect() throws SQLException {
+        return DriverManager.getConnection(DB_URL);
     }
 
-    private void saveToFile() {
-        Path path = Paths.get(filePath);
-        List<String> lines = new ArrayList<>();
-        lines.add("id,task");
-        for (int i = 0; i < tasks.size(); i++) {
-            lines.add((i + 1) + "," + tasks.get(i));
-        }
-        try {
-            Files.write(path, lines, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            // Ignore save errors for now.
+    private void initSchema() {
+        String sql = """
+                CREATE TABLE IF NOT EXISTS todo (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task TEXT NOT NULL
+                )
+                """;
+
+        try (Connection conn = connect();
+             Statement statement = conn.createStatement()) {
+
+            statement.executeUpdate(sql);
+
+        } catch (SQLException e) {
+            System.out.println("Schema init failed: " + e.getMessage());
         }
     }
 
     public void add(String task) {
-        tasks.add(task);
-        saveToFile();
+        String sql = "INSERT INTO todo(task) VALUES(?)";
+
+        try (Connection conn = connect();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+
+            statement.setString(1, task);
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("Add failed: " + e.getMessage());
+        }
+    }
+
+    public ArrayList<String> getTasks() {
+        ArrayList<String> tasks = new ArrayList<>();
+
+        String sql = "SELECT task FROM todo ORDER BY id";
+
+        try (Connection conn = connect();
+             PreparedStatement statement = conn.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+
+            while (results.next()) {
+                tasks.add(results.getString("task"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Find all failed: " + e.getMessage());
+        }
+
+        return tasks;
     }
 
     public void remove(int number) {
-        tasks.remove(number - 1);
-        saveToFile();
+        ArrayList<Integer> ids = new ArrayList<>();
+
+        String selectSql = "SELECT id FROM todo ORDER BY id";
+
+        try (Connection conn = connect();
+             PreparedStatement statement = conn.prepareStatement(selectSql);
+             ResultSet results = statement.executeQuery()) {
+
+            while (results.next()) {
+                ids.add(results.getInt("id"));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("ID select failed: " + e.getMessage());
+            return;
+        }
+
+        if (number < 1 || number > ids.size()) {
+            return;
+        }
+
+        int idToRemove = ids.get(number - 1);
+        removeById(idToRemove);
     }
 
-    public void print() {
-        for (int i = 0; i < tasks.size(); i++) {
-            System.out.println((i + 1) + ": " + tasks.get(i));
+    public void removeById(int id) {
+        String sql = "DELETE FROM todo WHERE id = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement statement = conn.prepareStatement(sql)) {
+
+            statement.setInt(1, id);
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            System.out.println("Remove failed: " + e.getMessage());
         }
-    }
-    public ArrayList<String> getTasks() {
-        return tasks;
     }
 }

@@ -1,27 +1,13 @@
 package rvt;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import javax.swing.SwingUtilities;
 
 public class App {
     public static void main(String[] args) {
-
-        try (
-                Connection connection = DriverManager.getConnection(
-                        "jdbc:sqlite:todo.db"
-                );
-
-                Statement statement = connection.createStatement();
-        ) {
-            String sql = "CREATE TABLE IF NOT EXISTS todo"
-                    + "(id INTEGER PRIMARY KEY, task TEXT NOT NULL) STRICT";
-
-            statement.executeUpdate(sql);
-
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
+        SwingUtilities.invokeLater(() -> {
+            TodoList todoList = new TodoList();
+            UserInterface ui = new UserInterface(todoList);
+            ui.start();
+        });
     }
 }
